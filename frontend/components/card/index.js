@@ -62,7 +62,7 @@ export class CardContainer extends React.Component {
       <div>
         <div className='header'>
           <h1 className='header-title'>zkLoans</h1>
-          <h2 className='sub-header'>Confidential credit scores</h2>
+          <h2 className='sub-header'>Confidential credit scores using zkSNARKs</h2>
         </div>
         <Card className='dark' score='725' max_score='850' />
       </div>
