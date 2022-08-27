@@ -13,6 +13,26 @@ mod verifier;
 mod views;
 pub use crate::verifier::verify_proof;
 
+// Verification key for verifying Groth16 zk-SNARK proofs on Near VM.
+//
+// The key must be in JSON format exported by snarkjs like this:
+// {
+//    "protocol": "groth16",
+//    "curve": "bn128",
+//    "nPublic": 1,
+//    "vk_beta_2": [...],
+//    "vk_gamma_2": [...],
+//    "vk_delta_2": [...],
+//    "vk_alphabet_12": [...],
+//    "IC": []
+// }
+//
+// Make sure the verification key has been generated before compiling the
+// Rust contracts. It must be generated only once per circuit. The
+// include_str!() macro ensures that the verification key is statically part
+// of the Rust program.
+static VERIFICATION_KEY: &'static str = include_str!("../../snark-dat/verification_key.json");
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Contract {
@@ -238,6 +258,11 @@ mod tests {
         assert_eq!(loans[0].approved, false);
         assert_eq!(loans[1].account_id.as_str(), "user_2");
         assert_eq!(loans[1].approved, true);
+    }
+
+    #[test]
+    fn foo() {
+        assert_eq!(LONG_STRING, "");
     }
 
     // Auxiliary fn: create a mock context
