@@ -24,16 +24,6 @@ export const ProfileRow = styled.div`
 `
 
 export const Profile = styled.div`
-  color: white;
-`
-
-export const NavButton = styled.button`
-  width: 94px;
-  height: 32px;
-  border: none;
-  border: solid 2px white;
-  border-radius: 50px;
-  background: transparent;
-  font-size: 14px;
-  margin-right: 14px;
+  color: rgb(180, 178, 178);
+  font-weight: 600;
 `

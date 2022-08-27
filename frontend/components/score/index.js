@@ -23,7 +23,7 @@ export function Score(props) {
   ]
 
   return (
-    <Card title='Credit score' subtitle='The exact score is blinded'>
+    <Card title='Your Credit Score is' subtitle='The exact score is blinded'>
       <Gauge score={props.score} max_score={props.max_score} />
       <div className='grid'>
         {data.map((item, idx) => (

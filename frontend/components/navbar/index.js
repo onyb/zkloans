@@ -1,5 +1,7 @@
-import { NavbarRow, NavButton, NearLogo, ProfileRow, Profile } from './style'
 import { signInWithNearWallet, signOutNearWallet } from '../../near-api'
+
+import { Button } from '../button'
+import { NavbarRow, NearLogo, ProfileRow, Profile } from './style'
 
 export function Navbar() {
   return (
@@ -8,9 +10,13 @@ export function Navbar() {
       <ProfileRow>
         <Profile>{window.accountId}</Profile>
         {window.accountId ? (
-          <NavButton onClick={signOutNearWallet}>Logout</NavButton>
+          <Button width='94px' height='32px' onClick={signOutNearWallet}>
+            Logout
+          </Button>
         ) : (
-          <NavButton onClick={signInWithNearWallet}>Connect</NavButton>
+          <Button width='94px' height='32px' onClick={signInWithNearWallet}>
+            Connect
+          </Button>
         )}
       </ProfileRow>
     </NavbarRow>
