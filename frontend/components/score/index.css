@@ -1,0 +1,24 @@
+.grid {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.detailInfo {
+  font-size: 9px;
+  opacity: 0.5;
+  margin: 5px 0 20px 0;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.mainInfo {
+  font-size: 22px;
+}
+
+.grid .gridBox:first-child .gridDetail {
+  border-right: dashed 1px #ffffff2e;
+}
+
+.grid .gridBox:last-child .gridDetail {
+  border-left: dashed 1px #ffffff2e;
+}
