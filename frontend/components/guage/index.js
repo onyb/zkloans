@@ -1,6 +1,7 @@
 import React from 'react'
 import * as d3 from 'd3'
 
+import './index.css'
 import { getColour } from './colorlib'
 
 export const Gauge = props => {

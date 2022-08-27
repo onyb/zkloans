@@ -1,29 +1,12 @@
 @import url('https://fonts.googleapis.com/css?family=Rubik:300,300i,400,400i,500,500i,700,700i,900,900i&display=swap&subset=cyrillic');
 
-body {
-  background: #353353;
-  padding: 0;
-  height: 100vh;
-  min-height: 100vh;
-  font-family: 'Rubik', sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-flow: column;
-}
-#app {
-  height: 100%;
-  display: flex;
-  align-items: center;
-}
-
 .card {
   overflow: hidden;
   font-family: 'Rubik', sans-serif;
-  border-radius: 25px;
-  box-shadow: 0px 10px 35px rgb(0 0 0 / 20%);
+  border-radius: 14px;
   margin: 20px;
   cursor: pointer;
+  box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px;
 }
 .card {
   background: #09132a;
@@ -32,40 +15,6 @@ body {
 .card-header {
   border-bottom: dashed 2px #192a52;
   padding-bottom: 20px;
-}
-.score-chart {
-  background: #09132a;
-  position: relative;
-  padding: 30px;
-  margin: 25px auto;
-}
-.score-chart p {
-  text-align: center;
-  font-size: 12px;
-  z-index: 3;
-  font-weight: 100;
-  opacity: 0.8;
-  margin: 0px;
-}
-.score-chart p.gaugue-score-bottom {
-  padding-top: 0px;
-}
-.score-chart .score-chart-legend {
-  background: transparent;
-  vertical-align: middle;
-  position: absolute;
-  text-align: center;
-  letter-spacing: 0.3em;
-}
-.score-chart #gaugue-score-middle-0,
-.score-chart #gaugue-score-middle-1 {
-  font-size: 45px;
-  padding: 0;
-  line-height: 1em;
-  color: #26e79a;
-  width: 100%;
-  text-align: center;
-  font-weight: 100;
 }
 
 .grid {
@@ -121,13 +70,13 @@ input {
 }
 
 .header-title {
-  color: white;
+  color: black;
   margin: 10px;
   text-align: center;
 }
 .sub-header {
   font-size: 13px;
   font-weight: 200;
-  color: #adadad;
+  color: black;
   text-align: center;
 }

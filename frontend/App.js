@@ -43,7 +43,13 @@ export default function App() {
   }
 
   return (
-      <CardContainer />
+      <>
+        <div>
+          <div>Near</div>
+          <div>Connect</div>
+        </div>
+        <CardContainer />
+      </>
   )
 
   return (
