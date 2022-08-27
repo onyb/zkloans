@@ -5,6 +5,7 @@ import './assets/global.css';
 
 import { getGreetingFromContract, setGreetingOnContract } from './near-api';
 import { EducationalText, SignInPrompt, SignOutButton } from './ui-components';
+import { CardContainer } from './components/card'
 
 
 export default function App() {
@@ -42,6 +43,10 @@ export default function App() {
   }
 
   return (
+      <CardContainer />
+  )
+
+  return (
     <>
       <SignOutButton accountId={window.accountId}/>
       <main className={uiPleaseWait ? 'please-wait' : ''}>
@@ -62,7 +67,6 @@ export default function App() {
             </button>
           </div>
         </form>
-        <EducationalText/>
       </main>
     </>
   );
