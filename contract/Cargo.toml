@@ -1,7 +1,7 @@
 [package]
-name = "hello_near"
-version = "1.0.0"
-authors = ["Near Inc <hello@near.org>"]
+name = "zkloans"
+version = "0.1.0"
+authors = ["Anirudha Bose <abose@brave.com>"]
 edition = "2021"
 
 [lib]
@@ -10,6 +10,14 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 near-sdk = "4.0.0"
 uint = { version = "0.9.3", default-features = false }
+borsh = { version = "0.9.3", features = ["const-generics"] }
+ark-bn254 = { version = "0.3.0", default-features = false, features = ["curve"] }
+ark-groth16 = { git = "https://github.com/arkworks-rs/groth16", rev = "765817f", default-features = false }
+ark-ff = "0.3.0"
+ark-ec = "0.3.0"
+serde-json-wasm = { version = "0.4.0" }
+anyhow = "1.0"
+thiserror = "1.0"
 
 [profile.release]
 codegen-units = 1

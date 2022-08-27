@@ -5,40 +5,68 @@
  * https://near-docs.io/develop/Contract
  *
  */
-
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{log, near_bindgen};
+use near_sdk::collections::UnorderedMap;
+use near_sdk::{env, near_bindgen, AccountId};
 
-// Define the default message
-const DEFAULT_MESSAGE: &str = "Hello";
+mod verifier;
+mod views;
+pub use crate::verifier::verify_proof;
 
-// Define the contract structure
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct Contract {
-    message: String,
+    // A map containing statuses of all loans processed by the contract.
+    //
+    // Absence of an AccountId indicates that the user hasn't submitted
+    // a loan application.
+    //
+    // If an AccountId is found in the map, the corresponding value indicates
+    // the status of the loan application.
+    pub loan_status: UnorderedMap<AccountId, bool>,
 }
 
 // Define the default, which automatically initializes the contract
-impl Default for Contract{
-    fn default() -> Self{
-        Self{message: DEFAULT_MESSAGE.to_string()}
+impl Default for Contract {
+    fn default() -> Self {
+        Self {
+            loan_status: UnorderedMap::new(b"d"),
+        }
     }
 }
 
 // Implement the contract structure
 #[near_bindgen]
 impl Contract {
-    // Public method - returns the greeting saved, defaulting to DEFAULT_MESSAGE
-    pub fn get_greeting(&self) -> String {
-        return self.message.clone();
+    // Public method - returns the loan status saved, defaulting to false
+    pub fn get_status(&self) -> Option<bool> {
+        let caller: AccountId = env::predecessor_account_id();
+        let status = self.get_loan_status_for_account(caller);
+        return match status {
+            Some(loan_status) => Some(loan_status.approved),
+            None => None,
+        };
     }
 
-    // Public method - accepts a greeting, such as "howdy", and records it
-    pub fn set_greeting(&mut self, message: String) {
-        // Use env::log to record logs permanently to the blockchain!
-        log!("Saving greeting {}", message);
-        self.message = message;
+    // Public method - approves loan for the AccountId and updates the
+    // loan status.
+    pub fn approve(&mut self) {
+        let caller: AccountId = env::predecessor_account_id();
+        self.loan_status.insert(&caller, &true);
+    }
+
+    // Public method - rejects loan for the AccountId and updates the
+    // loan status.
+    pub fn reject(&mut self) {
+        let caller: AccountId = env::predecessor_account_id();
+        self.loan_status.remove(&caller);
+        self.loan_status.insert(&caller, &false);
+    }
+
+    // Public method - evict AccountId from loan DB regardless of status.
+    pub fn evict(&mut self) {
+        let caller: AccountId = env::predecessor_account_id();
+        self.loan_status.remove(&caller);
     }
 }
 
@@ -49,24 +77,173 @@ impl Contract {
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use near_sdk::test_utils::VMContextBuilder;
+    use near_sdk::testing_env;
     #[test]
-    fn get_default_greeting() {
+    fn get_default_loan_status() {
         let contract = Contract::default();
-        // this test did not call set_greeting so should return the default "Hello" greeting
-        assert_eq!(
-            contract.get_greeting(),
-            "Hello".to_string()
-        );
+        set_context("some_user");
+
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
     }
 
     #[test]
-    fn set_then_get_greeting() {
+    fn approve_unapproved_account() {
         let mut contract = Contract::default();
-        contract.set_greeting("howdy".to_string());
-        assert_eq!(
-            contract.get_greeting(),
-            "howdy".to_string()
-        );
+        set_context("some_user");
+
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
+
+        contract.approve();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, true);
+    }
+
+    #[test]
+    fn approve_approved_account() {
+        let mut contract = Contract::default();
+        set_context("some_user");
+
+        contract.approve();
+        contract.approve();
+
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, true);
+    }
+
+    #[test]
+    fn approve_rejected_account() {
+        let mut contract = Contract::default();
+        set_context("some_user");
+
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
+
+        contract.reject();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, false);
+
+        contract.approve();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, true);
+    }
+
+    #[test]
+    fn reject_unapproved_account() {
+        let mut contract = Contract::default();
+        set_context("some_user");
+
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
+
+        contract.reject();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, false);
+    }
+
+    #[test]
+    fn reject_approved_account() {
+        let mut contract = Contract::default();
+        set_context("some_user");
+
+        contract.approve();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, true);
+
+        contract.reject();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, false);
+    }
+
+    #[test]
+    fn reject_rejected_account() {
+        let mut contract = Contract::default();
+        set_context("some_user");
+
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
+
+        contract.reject();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, false);
+
+        contract.reject();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, false);
+    }
+
+    ////////
+    #[test]
+    fn evict_unapproved_account() {
+        let mut contract = Contract::default();
+        set_context("some_user");
+
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
+
+        contract.evict();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
+    }
+
+    #[test]
+    fn evict_approved_account() {
+        let mut contract = Contract::default();
+        set_context("some_user");
+
+        contract.approve();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, true);
+
+        contract.evict();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
+    }
+
+    #[test]
+    fn evict_rejected_account() {
+        let mut contract = Contract::default();
+        set_context("some_user");
+
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
+
+        contract.reject();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.unwrap().approved, false);
+
+        contract.evict();
+        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        assert_eq!(status.is_none(), true);
+    }
+
+    #[test]
+    fn dump_all_loans() {
+        let mut contract = Contract::default();
+
+        set_context("user_1");
+        contract.reject();
+
+        set_context("user_2");
+        contract.approve();
+
+        set_context("user_3");
+        contract.evict();
+
+        let loans = contract.get_loans();
+        assert_eq!(loans.len(), 2);
+        assert_eq!(loans[0].account_id.as_str(), "user_1");
+        assert_eq!(loans[0].approved, false);
+        assert_eq!(loans[1].account_id.as_str(), "user_2");
+        assert_eq!(loans[1].approved, true);
+    }
+
+    // Auxiliary fn: create a mock context
+    fn set_context(predecessor: &str) {
+        let mut builder = VMContextBuilder::new();
+        builder.predecessor_account_id(predecessor.parse().unwrap());
+        testing_env!(builder.build());
     }
 }

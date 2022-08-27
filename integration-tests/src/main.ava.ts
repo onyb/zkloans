@@ -30,15 +30,19 @@ test.afterEach(async (t) => {
   });
 });
 
-test('returns the default greeting', async (t) => {
+test('returns the default loan status', async (t) => {
   const { contract } = t.context.accounts;
-  const message: string = await contract.view('get_greeting', {});
-  t.is(message, 'Hello');
+  const status: boolean = await contract.view('get_status', {});
+  t.is(status, false);
 });
 
-test('changes the message', async (t) => {
+test('approve a loan', async (t) => {
   const { root, contract } = t.context.accounts;
-  await root.call(contract, 'set_greeting', { message: 'Howdy' });
-  const message: string = await contract.view('get_greeting', {});
-  t.is(message, 'Howdy');
+
+  let status: boolean = await contract.view('get_status', {});
+  t.is(status, false);
+
+  await root.call(contract, 'approve', {});
+  status = await contract.view('get_status', {});
+  t.is(status, true);
 });

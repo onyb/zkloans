@@ -6,6 +6,7 @@ import { Card } from '../card'
 import { Navbar } from '../navbar'
 import { Score } from '../score'
 import { ScoreForm } from '../score-form'
+import { Generating } from '../generating'
 
 export function App() {
   const [showScoreForm, setShowScoreForm] = React.useState(true)
@@ -26,6 +27,7 @@ export function App() {
       </div>
 
       {showScoreForm && <ScoreForm onSubmit={submitScoreForm} />}
+      {showGeneratingProof && <Generating />}
       {showScore && <Score score='725' max_score='850' />}
     </Container>
   )
