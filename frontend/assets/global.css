@@ -22,12 +22,11 @@ h2 {
   pointer-events: none;
 }
 
-ul.information  {
+ul.information {
   margin: 2em 0 2em 0;
   padding: 0;
   text-align: left;
   font-size: 0.8em;
-
 }
 .information li:first-child {
   border-top: 1px solid var(--light-gray);
@@ -86,7 +85,8 @@ a:active,
   color: var(--secondary);
 }
 
-button, input {
+button,
+input {
   font: inherit;
   outline: none;
 }
@@ -107,7 +107,8 @@ button {
   padding: 0.3em 0.75em;
   transition: transform 30ms;
 }
-button:hover, button:focus {
+button:hover,
+button:focus {
   box-shadow: 0 0 10em rgba(255, 255, 255, 0.2) inset;
 }
 
@@ -136,7 +137,7 @@ li {
 }
 
 main.please-wait .loader,
-main.please-wait .loader:after{
+main.please-wait .loader:after {
   display: inline-block;
 }
 .loader,

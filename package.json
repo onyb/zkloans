@@ -4,14 +4,14 @@
   "license": "(MIT AND Apache-2.0)",
   "scripts": {
     "start": "cd frontend && npm run start",
-    "deploy": "npm run build:contract && cd contract && near dev-deploy --wasmFile ./target/wasm32-unknown-unknown/release/hello_near.wasm",
+    "deploy": "npm run build:contract && cd contract && near dev-deploy --wasmFile ./target/wasm32-unknown-unknown/release/zkloans.wasm",
     "build": "npm run build:contract && npm run build:web",
     "build:web": "cd frontend && npm run build",
     "build:contract": "cd contract && rustup target add wasm32-unknown-unknown && cargo build --all --target wasm32-unknown-unknown --release",
     "build:circuits": "circom circuits/loan.circom --r1cs --wasm --sym -o snark-dat",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "cd contract && cargo test",
-    "test:integration": "npm run build:contract && cd integration-tests && npm test  -- -- \"./contract/target/wasm32-unknown-unknown/release/hello_near.wasm\"",
+    "test:integration": "npm run build:contract && cd integration-tests && npm test  -- -- \"./contract/target/wasm32-unknown-unknown/release/zkloans.wasm\"",
     "deps-install": "npm install && cd frontend && npm install && cd ../integration-tests && npm install && cd .."
   },
   "devDependencies": {

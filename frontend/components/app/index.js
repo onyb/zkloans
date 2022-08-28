@@ -9,6 +9,7 @@ import { ScoreForm } from '../score-form'
 import { ZK } from '../zk'
 
 import { getCreditScore } from './mock'
+import { Confirming } from '../confirming'
 
 export function App() {
   const [showScoreForm, setShowScoreForm] = React.useState(true)
@@ -18,8 +19,16 @@ export function App() {
   const [showScore, setShowScore] = React.useState(false)
   const [publicSignals, setPublicSignals] = React.useState(undefined)
   const [proof, setProof] = React.useState(undefined)
+  const [isConfirmingTransaction, setIsConfirmingTransaction] = React.useState(false)
 
   const creditReport = getCreditScore()
+
+  const setIsConfirmingTransactionWrapper = () => {
+    setIsConfirmingTransaction(true)
+    setShowScore(false)
+    setShowScore(false)
+    setShowZK(false)
+  }
 
   const submitScoreForm = () => {
     setShowScoreForm(false)
@@ -66,6 +75,7 @@ export function App() {
         <h2 className='sub-header'>Confidential credit scores using zkSNARKs</h2>
       </div>
 
+      {isConfirmingTransaction && <Confirming />}
       {showScoreForm && <ScoreForm onSubmit={submitScoreForm} />}
       {showZK && <ZK isValidZKProof={isValidZKProof} isVerifyingZKProof={isVerifyingZKProof} />}
       {showScore && (
@@ -74,6 +84,7 @@ export function App() {
           proof={proof}
           publicSignals={publicSignals}
           isValidZKProof={isValidZKProof}
+          setIsConfirmingTransaction={setIsConfirmingTransactionWrapper}
         />
       )}
     </Container>

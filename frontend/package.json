@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "axios": "^0.27.2",
+    "big.js": "^6.2.1",
     "d3": "^7.6.1",
     "lottie-react": "^2.3.1",
     "near-api-js": "^0.44.2",

@@ -1,33 +1,40 @@
-import { connect, Contract, keyStores, WalletConnection } from 'near-api-js';
-import { getConfig } from './near-config';
+import { connect, Contract, keyStores, WalletConnection } from 'near-api-js'
+import Big from 'big.js'
+import { getConfig } from './near-config'
 
-const nearConfig = getConfig(process.env.NODE_ENV || 'development');
+const BOATLOAD_OF_GAS = Big(3)
+  .times(10 ** 14)
+  .toFixed()
+
+const nearConfig = getConfig(process.env.NODE_ENV || 'development')
 
 // Initialize contract & set global variables
 export async function initContract() {
   // Initialize connection to the NEAR testnet
-  const near = await connect(Object.assign({ deps: { keyStore: new keyStores.BrowserLocalStorageKeyStore() } }, nearConfig));
+  const near = await connect(
+    Object.assign({ deps: { keyStore: new keyStores.BrowserLocalStorageKeyStore() } }, nearConfig)
+  )
 
   // Initializing Wallet based Account. It can work with NEAR testnet wallet that
   // is hosted at https://wallet.testnet.near.org
-  window.walletConnection = new WalletConnection(near);
+  window.walletConnection = new WalletConnection(near)
 
   // Getting the Account ID. If still unauthorized, it's just empty string
-  window.accountId = window.walletConnection.getAccountId();
+  window.accountId = window.walletConnection.getAccountId()
 
   // Initializing our contract APIs by contract name and configuration
   window.contract = await new Contract(window.walletConnection.account(), nearConfig.contractName, {
     // View methods are read only. They don't modify the state, but usually return some value.
-    viewMethods: ['get_greeting'],
+    viewMethods: ['get_loan_status_for_account'],
     // Change methods can modify the state. But you don't receive the returned value when called.
-    changeMethods: ['set_greeting'],
-  });
+    changeMethods: ['verify', 'evict']
+  })
 }
 
 export function signOutNearWallet() {
-  window.walletConnection.signOut();
+  window.walletConnection.signOut()
   // reload page
-  window.location.replace(window.location.origin + window.location.pathname);
+  window.location.replace(window.location.origin + window.location.pathname)
 }
 
 export function signInWithNearWallet() {
@@ -35,17 +42,23 @@ export function signInWithNearWallet() {
   // user's behalf.
   // This works by creating a new access key for the user's account and storing
   // the private key in localStorage.
-  window.walletConnection.requestSignIn(nearConfig.contractName);
+  window.walletConnection.requestSignIn(nearConfig.contractName)
 }
 
-export async function setGreetingOnContract(message) {
-  let response = await window.contract.set_greeting({
-    args: { message: message }
-  });
-  return response;
+export async function verifyGroth16Proof(proof, publicInputs) {
+  let response = await window.contract.verify(
+    { proof_str: JSON.stringify(proof), public_inputs_str: JSON.stringify(publicInputs) },
+    BOATLOAD_OF_GAS
+  )
+  return response
 }
 
-export async function getGreetingFromContract() {
-  let greeting = await window.contract.get_greeting();
-  return greeting;
+export async function evictLoan() {
+  let response = await window.contract.evict({ account_id: window.accountId})
+  return response
+}
+
+export async function getLoanStatusFromContract() {
+  let status = await window.contract.get_loan_status_for_account({ account_id: window.accountId })
+  return status
 }

@@ -11,7 +11,7 @@ use near_sdk::{env, near_bindgen, AccountId};
 
 mod verifier;
 mod views;
-pub use crate::verifier::verify_proof;
+pub use crate::verifier::{get_prepared_verifying_key, parse_verification_key, verify_proof};
 
 // Verification key for verifying Groth16 zk-SNARK proofs on Near VM.
 //
@@ -68,25 +68,55 @@ impl Contract {
         };
     }
 
+    // Public method - verify a groth16 ZK-SNARK proof and approve/reject
+    // loan based on the verification result.
+    pub fn verify(&mut self, proof_str: String, public_inputs_str: String) {
+        let caller: AccountId = env::predecessor_account_id();
+        let vkey = parse_verification_key(VERIFICATION_KEY.to_string());
+
+        let status = match vkey {
+            Ok(key_json) => {
+                let prepared_vkey = get_prepared_verifying_key(key_json);
+                match verify_proof(
+                    prepared_vkey,
+                    proof_str,
+                    public_inputs_str,
+                ) {
+                    Ok(result) => Some(result),
+                    Err(_) => None,
+                }
+            }
+            Err(_) => None,
+        };
+
+        match status {
+            Some(approved) => {
+                if approved {
+                    self.approve(caller);
+                } else {
+                    self.reject(caller);
+                }
+            }
+            None => (),
+        }
+    }
+
     // Public method - approves loan for the AccountId and updates the
     // loan status.
-    pub fn approve(&mut self) {
-        let caller: AccountId = env::predecessor_account_id();
-        self.loan_status.insert(&caller, &true);
+    fn approve(&mut self, account_id: AccountId) {
+        self.loan_status.insert(&account_id, &true);
     }
 
     // Public method - rejects loan for the AccountId and updates the
     // loan status.
-    pub fn reject(&mut self) {
-        let caller: AccountId = env::predecessor_account_id();
-        self.loan_status.remove(&caller);
-        self.loan_status.insert(&caller, &false);
+    pub fn reject(&mut self, account_id: AccountId) {
+        self.loan_status.remove(&account_id);
+        self.loan_status.insert(&account_id, &false);
     }
 
     // Public method - evict AccountId from loan DB regardless of status.
-    pub fn evict(&mut self) {
-        let caller: AccountId = env::predecessor_account_id();
-        self.loan_status.remove(&caller);
+    pub fn evict(&mut self, account_id: AccountId) {
+        self.loan_status.remove(&account_id);
     }
 }
 
@@ -111,145 +141,143 @@ mod tests {
     #[test]
     fn approve_unapproved_account() {
         let mut contract = Contract::default();
-        set_context("some_user");
+        let account_id: AccountId = "some_user".parse().unwrap();
 
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.is_none(), true);
 
-        contract.approve();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.approve(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id);
         assert_eq!(status.unwrap().approved, true);
     }
 
     #[test]
     fn approve_approved_account() {
         let mut contract = Contract::default();
-        set_context("some_user");
+        let account_id: AccountId = "some_user".parse().unwrap();
 
-        contract.approve();
-        contract.approve();
+        contract.approve(account_id.clone());
+        contract.approve(account_id.clone());
 
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        let status = contract.get_loan_status_for_account(account_id);
         assert_eq!(status.unwrap().approved, true);
     }
 
     #[test]
     fn approve_rejected_account() {
         let mut contract = Contract::default();
-        set_context("some_user");
+        let account_id: AccountId = "some_user".parse().unwrap();
 
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.is_none(), true);
 
-        contract.reject();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.reject(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.unwrap().approved, false);
 
-        contract.approve();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.approve(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id);
         assert_eq!(status.unwrap().approved, true);
     }
 
     #[test]
     fn reject_unapproved_account() {
         let mut contract = Contract::default();
-        set_context("some_user");
+        let account_id: AccountId = "some_user".parse().unwrap();
 
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.is_none(), true);
 
-        contract.reject();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.reject(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id);
         assert_eq!(status.unwrap().approved, false);
     }
 
     #[test]
     fn reject_approved_account() {
         let mut contract = Contract::default();
-        set_context("some_user");
+        let account_id: AccountId = "some_user".parse().unwrap();
 
-        contract.approve();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.approve(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.unwrap().approved, true);
 
-        contract.reject();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.reject(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id);
         assert_eq!(status.unwrap().approved, false);
     }
 
     #[test]
     fn reject_rejected_account() {
         let mut contract = Contract::default();
-        set_context("some_user");
+        let account_id: AccountId = "some_user".parse().unwrap();
 
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.is_none(), true);
 
-        contract.reject();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.reject(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.unwrap().approved, false);
 
-        contract.reject();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.reject(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id);
         assert_eq!(status.unwrap().approved, false);
     }
 
     #[test]
     fn evict_unapproved_account() {
         let mut contract = Contract::default();
-        set_context("some_user");
+        let account_id: AccountId = "some_user".parse().unwrap();
 
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.is_none(), true);
 
-        contract.evict();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.evict(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id);
         assert_eq!(status.is_none(), true);
     }
 
     #[test]
     fn evict_approved_account() {
         let mut contract = Contract::default();
-        set_context("some_user");
+        let account_id: AccountId = "some_user".parse().unwrap();
 
-        contract.approve();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.approve(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.unwrap().approved, true);
 
-        contract.evict();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.evict(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id);
         assert_eq!(status.is_none(), true);
     }
 
     #[test]
     fn evict_rejected_account() {
         let mut contract = Contract::default();
-        set_context("some_user");
+        let account_id: AccountId = "some_user".parse().unwrap();
 
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.is_none(), true);
 
-        contract.reject();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.reject(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id.clone());
         assert_eq!(status.unwrap().approved, false);
 
-        contract.evict();
-        let status = contract.get_loan_status_for_account("some_user".parse().unwrap());
+        contract.evict(account_id.clone());
+        let status = contract.get_loan_status_for_account(account_id);
         assert_eq!(status.is_none(), true);
     }
 
     #[test]
     fn dump_all_loans() {
         let mut contract = Contract::default();
+        let account_id_1: AccountId = "user_1".parse().unwrap();
+        let account_id_2: AccountId = "user_2".parse().unwrap();
+        let account_id_3: AccountId = "user_3".parse().unwrap();
 
-        set_context("user_1");
-        contract.reject();
-
-        set_context("user_2");
-        contract.approve();
-
-        set_context("user_3");
-        contract.evict();
+        contract.reject(account_id_1);
+        contract.approve(account_id_2);
+        contract.evict(account_id_3);
 
         let loans = contract.get_loans();
         assert_eq!(loans.len(), 2);
