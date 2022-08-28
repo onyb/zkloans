@@ -10,6 +10,7 @@ import { ZK } from '../zk'
 
 import { getCreditScore } from './mock'
 import { Confirming } from '../confirming'
+import { getLoanStatusFromContract } from '../../near-api'
 
 export function App() {
   const [showScoreForm, setShowScoreForm] = React.useState(true)
@@ -20,6 +21,26 @@ export function App() {
   const [publicSignals, setPublicSignals] = React.useState(undefined)
   const [proof, setProof] = React.useState(undefined)
   const [isConfirmingTransaction, setIsConfirmingTransaction] = React.useState(false)
+  const [status, setStatus] = React.useState(null)
+
+  React.useEffect(() => {
+    const interval = setInterval(
+      () =>
+        getLoanStatusFromContract().then(e => {
+          if (e === null) {
+            setStatus(null)
+          }
+
+          if (e && e.approved !== undefined) {
+            setStatus(e.approved)
+          }
+        }),
+      1 * 1000
+    )
+    return () => {
+      clearInterval(interval)
+    }
+  }, [])
 
   const creditReport = getCreditScore()
 
@@ -75,10 +96,12 @@ export function App() {
         <h2 className='sub-header'>Confidential credit scores using zkSNARKs</h2>
       </div>
 
-      {isConfirmingTransaction && <Confirming />}
-      {showScoreForm && <ScoreForm onSubmit={submitScoreForm} />}
-      {showZK && <ZK isValidZKProof={isValidZKProof} isVerifyingZKProof={isVerifyingZKProof} />}
-      {showScore && (
+      {(isConfirmingTransaction || status !== null) && <Confirming status={status} />}
+      {status === null && showScoreForm && <ScoreForm onSubmit={submitScoreForm} />}
+      {status === null && showZK && (
+        <ZK isValidZKProof={isValidZKProof} isVerifyingZKProof={isVerifyingZKProof} />
+      )}
+      {status === null && showScore && (
         <Score
           creditReport={creditReport}
           proof={proof}
