@@ -194,7 +194,6 @@ mod tests {
         assert_eq!(status.unwrap().approved, false);
     }
 
-    ////////
     #[test]
     fn evict_unapproved_account() {
         let mut contract = Contract::default();
@@ -258,11 +257,6 @@ mod tests {
         assert_eq!(loans[0].approved, false);
         assert_eq!(loans[1].account_id.as_str(), "user_2");
         assert_eq!(loans[1].approved, true);
-    }
-
-    #[test]
-    fn foo() {
-        assert_eq!(LONG_STRING, "");
     }
 
     // Auxiliary fn: create a mock context

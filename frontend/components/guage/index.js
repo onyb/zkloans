@@ -5,7 +5,7 @@ import './index.css'
 import { getColour } from './colorlib'
 
 export const Gauge = props => {
-  const { score, max_score } = props
+  const { score, maxScore } = props
 
   React.useEffect(() => {
     d3.selectAll('svg > *').remove()
@@ -118,7 +118,7 @@ export const Gauge = props => {
         }
       }
     }
-    const perc = parseInt(value) / max_score
+    const perc = parseInt(value) / maxScore
     ScoreChart.chart({
       parent: '#test',
       selector: '#svg-chart',
@@ -144,7 +144,7 @@ export const Gauge = props => {
         <div id='gaugue-score-middle' style={{ color: getColour(score) }}>
           0
         </div>
-        <p className='gaugue-score-top'>out of {max_score}</p>
+        <p className='gaugue-score-top'>out of {maxScore}</p>
       </div>
     </div>
   )

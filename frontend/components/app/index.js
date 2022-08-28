@@ -1,4 +1,5 @@
 import React from 'react'
+import axios from 'axios'
 
 import './index.css'
 import { Container } from './style'
@@ -6,6 +7,8 @@ import { Navbar } from '../navbar'
 import { Score } from '../score'
 import { ScoreForm } from '../score-form'
 import { ZK } from '../zk'
+
+import { getCreditScore } from './mock'
 
 export function App() {
   const [showScoreForm, setShowScoreForm] = React.useState(true)
@@ -16,37 +19,43 @@ export function App() {
   const [publicSignals, setPublicSignals] = React.useState(undefined)
   const [proof, setProof] = React.useState(undefined)
 
+  const creditReport = getCreditScore()
+
   const submitScoreForm = () => {
     setShowScoreForm(false)
     setShowZK(true)
 
-    fetch
-      .post('http://localhost:8081/prove', {
-        a: 850,
-        b: 800
-      })
-      .then(response => response.json())
-      .then(json => {
-        // Set groth16 ZK-SNARK proof and public signals to React state
-        setPublicSignals(json.publicSignals)
-        setProof(json.proof)
+    setTimeout(() => {
+      axios
+        .post('http://localhost:8081/prove', {
+          a: creditReport.score,
+          b: creditReport.threshold
+        })
+        .then(response => response.data)
+        .then(json => {
+          // Set groth16 ZK-SNARK proof and public signals to React state
+          setPublicSignals(json.publicSignals)
+          setProof(json.proof)
 
-        setIsVerifyingZKProof(true)
-        fetch
-          .post('http://localhost:8081/verify', {
-            proof,
-            publicSignals
-          })
-          .then(response => response.json())
-          .then(json => {
-            setIsValidZKProof(json.valid)
-            setIsVerifyingZKProof(false)
-          })
-      })
+          setIsVerifyingZKProof(true)
+          axios
+            .post('http://localhost:8081/verify', {
+              proof: json.proof,
+              publicSignals: json.publicSignals
+            })
+            .then(response => response.data)
+            .then(json => {
+              setIsValidZKProof(json.valid)
+              setTimeout(() => {
+                setIsVerifyingZKProof(false)
 
-    // Navigate to rendering score
-    setShowZK(false)
-    setShowScore(true)
+                // Navigate to rendering score
+                setShowZK(false)
+                setShowScore(true)
+              }, 3 * 1000)
+            })
+        })
+    }, 7 * 1000)
   }
 
   return (
@@ -60,7 +69,12 @@ export function App() {
       {showScoreForm && <ScoreForm onSubmit={submitScoreForm} />}
       {showZK && <ZK isValidZKProof={isValidZKProof} isVerifyingZKProof={isVerifyingZKProof} />}
       {showScore && (
-        <Score score='725' max_score='850' proof={proof} publicSignals={publicSignals} />
+        <Score
+          creditReport={creditReport}
+          proof={proof}
+          publicSignals={publicSignals}
+          isValidZKProof={isValidZKProof}
+        />
       )}
     </Container>
   )

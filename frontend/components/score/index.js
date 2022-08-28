@@ -24,7 +24,7 @@ export function Score(props) {
 
   return (
     <Card title='Your Credit Score is' subtitle='The exact score is blinded'>
-      <Gauge score={props.score} max_score={props.max_score} />
+      <Gauge score={props.creditReport.score} maxScore={props.creditReport.maxScore} />
       <div className='grid'>
         {data.map((item, idx) => (
           <GridBox key={idx} value={item.value} title={item.name} />
